@@ -13,8 +13,12 @@
 
 package org.wso2.carbon.apimgt.rest.integration.tests.store.api;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.ApiException;
+import org.wso2.carbon.apimgt.rest.integration.tests.store.common.SampleTestObjectCreator;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.API;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.Comment;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.Document;
@@ -22,13 +26,31 @@ import org.wso2.carbon.apimgt.rest.integration.tests.store.model.DocumentList;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.Rating;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.RatingList;
 
+import java.util.UUID;
+
 /**
  * API tests for APIIndividualApi
  */
 public class APIIndividualApiTest {
 
     private final APIIndividualApi api = new APIIndividualApi();
+    private final org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APICollectionApi apiSetup =
+            new org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APICollectionApi();
+    private final org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APIIndividualApi apiRemove =
+            new org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APIIndividualApi();
+    SampleTestObjectCreator sampleTestObjectCreator = new SampleTestObjectCreator();
 
+    private org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.API response1 = null;
+    private String generatedCommentId = UUID.randomUUID().toString();
+    ;
+
+    @BeforeClass
+    public void beforeClass() throws org.wso2.carbon.apimgt.rest.integration.tests.publisher.ApiException {
+        org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.API api001 = sampleTestObjectCreator.createSampleAPI("api001", "api001", "1.0.0",
+                "admin", "CREATED");
+        response1 = apiSetup.apisPost(api001, "application/json");
+        apiRemove.apisChangeLifecyclePost("Published", response1.getId(), null, null, null);
+    }
 
     /**
      * Remove a Comment
@@ -37,13 +59,25 @@ public class APIIndividualApiTest {
      */
     @Test
     public void apisApiIdCommentsCommentIdDeleteTest() throws ApiException {
-        String commentId = null;
-        String apiId = null;
+        String commentId = UUID.randomUUID().toString();
+        String apiId = response1.getId();
+        String commentText = "This is a comment";
+        String ifNoneMatch = null;
+        String ifModifiedSince = null;
         String ifMatch = null;
         String ifUnmodifiedSince = null;
-        api.apisApiIdCommentsCommentIdDelete(commentId, apiId, ifMatch, ifUnmodifiedSince);
 
-        // TODO: test validations
+        Comment body = new Comment();
+        body.setCommentId(commentId);
+        body.setApiId(apiId);
+        body.setUsername(response1.getProvider());
+        body.setCommentText(commentText);
+
+        Comment responseCommpentPost = api.apisApiIdCommentsPost(apiId, body);
+        Comment responseCommentGet = api.apisApiIdCommentsCommentIdGet
+                (responseCommpentPost.getCommentId(), apiId, ifNoneMatch, ifModifiedSince);
+
+        api.apisApiIdCommentsCommentIdDelete(responseCommentGet.getCommentId(), apiId, ifMatch, ifUnmodifiedSince);
     }
 
     /**
@@ -53,13 +87,23 @@ public class APIIndividualApiTest {
      */
     @Test
     public void apisApiIdCommentsCommentIdGetTest() throws ApiException {
-        String commentId = null;
-        String apiId = null;
+        String commentId = UUID.randomUUID().toString();
+        String apiId = response1.getId();
+        String commentText = "This is a comment";
         String ifNoneMatch = null;
         String ifModifiedSince = null;
-        Comment response = api.apisApiIdCommentsCommentIdGet(commentId, apiId, ifNoneMatch, ifModifiedSince);
 
-        // TODO: test validations
+        Comment body = new Comment();
+        body.setCommentId(commentId);
+        body.setApiId(apiId);
+        body.setUsername(response1.getProvider());
+        body.setCommentText(commentText);
+
+        Comment responseCommpentPost = api.apisApiIdCommentsPost(apiId, body);
+        Comment response = api.apisApiIdCommentsCommentIdGet
+                (responseCommpentPost.getCommentId(), apiId, ifNoneMatch, ifModifiedSince);
+
+        Assert.assertEquals(response.getCommentText(), commentText);
     }
 
     /**
@@ -69,14 +113,37 @@ public class APIIndividualApiTest {
      */
     @Test
     public void apisApiIdCommentsCommentIdPutTest() throws ApiException {
-        String commentId = null;
-        String apiId = null;
-        Comment body = null;
+        String commentId = UUID.randomUUID().toString();
+        String apiId = response1.getId();
+        String commentText = "This is a comment";
+        String updatedCommentText = "This is the updated comment";
+        String ifNoneMatch = null;
+        String ifModifiedSince = null;
         String ifMatch = null;
         String ifUnmodifiedSince = null;
-        Comment response = api.apisApiIdCommentsCommentIdPut(commentId, apiId, body, ifMatch, ifUnmodifiedSince);
 
-        // TODO: test validations
+        Comment body = new Comment();
+        body.setCommentId(commentId);
+        body.setApiId(apiId);
+        body.setUsername(response1.getProvider());
+        body.setCommentText(commentText);
+
+        Comment responseCommpentPost = api.apisApiIdCommentsPost(apiId, body);
+        Comment responseCommentGet = api.apisApiIdCommentsCommentIdGet
+                (responseCommpentPost.getCommentId(), apiId, ifNoneMatch, ifModifiedSince);
+
+        Assert.assertEquals(responseCommentGet.getCommentText(), commentText);
+
+        Comment bodyUpdated = new Comment();
+        bodyUpdated.setCommentId(commentId);
+        bodyUpdated.setApiId(apiId);
+        bodyUpdated.setUsername(response1.getProvider());
+        bodyUpdated.setCommentText(updatedCommentText);
+
+        Comment response = api.apisApiIdCommentsCommentIdPut
+                (responseCommentGet.getCommentId(), apiId, bodyUpdated, ifMatch, ifUnmodifiedSince);
+
+        Assert.assertEquals(response.getCommentText(), updatedCommentText);
     }
 
     /**
@@ -84,11 +151,17 @@ public class APIIndividualApiTest {
      */
     @Test
     public void apisApiIdCommentsPostTest() throws ApiException {
-        String apiId = null;
-        Comment body = null;
+        String apiId = response1.getId();
+        String commentText = "This is a comment";
+        String commentId = UUID.randomUUID().toString();
+        Comment body = new Comment();
+        body.setCommentId(commentId);
+        body.setApiId(apiId);
+        body.setUsername(response1.getProvider());
+        body.setCommentText(commentText);
         Comment response = api.apisApiIdCommentsPost(apiId, body);
-
-        // TODO: test validations
+        Assert.assertEquals(response.getUsername(), response1.getProvider());
+        Assert.assertEquals(response.getCommentText(), commentText);
     }
 
     /**
@@ -232,4 +305,10 @@ public class APIIndividualApiTest {
         // TODO: test validations
     }
 
+    @AfterClass
+    public void afterClass() throws org.wso2.carbon.apimgt.rest.integration.tests.publisher.ApiException, InterruptedException {
+        org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APIList response =
+                apiSetup.apisGet(10, 0, null, null, null);
+        apiRemove.apisApiIdDelete(response.getList().get(0).getId(), null, null);
+    }
 }

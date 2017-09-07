@@ -13,9 +13,17 @@
 
 package org.wso2.carbon.apimgt.rest.integration.tests.store.api;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APIIndividualApi;
+import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.API;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.ApiException;
+import org.wso2.carbon.apimgt.rest.integration.tests.store.common.SampleTestObjectCreator;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.Subscription;
+
+import java.util.UUID;
 
 /**
  * API tests for SubscriptionIndividualApi
@@ -23,7 +31,21 @@ import org.wso2.carbon.apimgt.rest.integration.tests.store.model.Subscription;
 public class SubscriptionIndividualApiTest {
 
     private final SubscriptionIndividualApi api = new SubscriptionIndividualApi();
+    private final org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APICollectionApi apiSetup =
+            new org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APICollectionApi();
+    private final org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APIIndividualApi apiRemove =
+            new APIIndividualApi();
+    private SampleTestObjectCreator sampleTestObjectCreator = new SampleTestObjectCreator();
 
+    private API responseApi = null;
+
+    @BeforeClass
+    public void beforeClass() throws org.wso2.carbon.apimgt.rest.integration.tests.publisher.ApiException {
+        API api = sampleTestObjectCreator.createSampleAPI("api001", "api001", "1.0.0",
+                "admin", "PUBLISHED");
+        responseApi = apiSetup.apisPost(api, "application/json");
+        apiRemove.apisChangeLifecyclePost("Published", responseApi.getId(), null, null, null);
+    }
 
     /**
      * Add a new subscription
@@ -32,10 +54,15 @@ public class SubscriptionIndividualApiTest {
      */
     @Test
     public void subscriptionsPostTest() throws ApiException {
-        Subscription body = null;
+        String subscriptionId = UUID.randomUUID().toString();
+        Subscription body = new Subscription();
+        body.setSubscriptionId(subscriptionId);
+        body.setApiIdentifier(responseApi.getContext());
+        body.setApiName(responseApi.getName());
+        body.apiVersion(responseApi.getVersion());
         Subscription response = api.subscriptionsPost(body);
 
-        // TODO: test validations
+        Assert.assertEquals(response.getSubscriptionId(), subscriptionId);
     }
 
     /**
@@ -66,6 +93,13 @@ public class SubscriptionIndividualApiTest {
         Subscription response = api.subscriptionsSubscriptionIdGet(subscriptionId, ifNoneMatch, ifModifiedSince);
 
         // TODO: test validations
+    }
+
+    @AfterClass
+    public void afterClass() throws org.wso2.carbon.apimgt.rest.integration.tests.publisher.ApiException {
+        org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APIList response =
+                apiSetup.apisGet(10, 0, null, null, null);
+        apiRemove.apisApiIdDelete(response.getList().get(0).getId(), null, null);
     }
 
 }

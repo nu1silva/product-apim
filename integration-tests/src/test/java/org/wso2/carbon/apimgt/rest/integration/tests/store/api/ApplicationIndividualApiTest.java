@@ -13,6 +13,7 @@
 
 package org.wso2.carbon.apimgt.rest.integration.tests.store.api;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.ApiException;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.Application;
@@ -22,6 +23,9 @@ import org.wso2.carbon.apimgt.rest.integration.tests.store.model.ApplicationKeys
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.ApplicationKeysList;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.ApplicationToken;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.ApplicationTokenGenerateRequest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * API tests for ApplicationIndividualApi
@@ -38,12 +42,26 @@ public class ApplicationIndividualApiTest {
      */
     @Test
     public void applicationsApplicationIdDeleteTest() throws ApiException {
-        String applicationId = null;
+        // Create application for deletion
+        Application body = new Application();
+        String applicationName = "SampleApplication";
+        body.setName(applicationName);
+        body.setThrottlingTier("50PerMin");
+        Application response = api.applicationsPost(body);
+
+        // Check created
+        String ifNoneMatch = null;
+        String ifModifiedSince = null;
+        Application checkCreated = api.applicationsApplicationIdGet(response.getApplicationId(), ifNoneMatch, ifModifiedSince);
+        Assert.assertEquals(checkCreated.getName(), applicationName);
+
+        // Delete application
         String ifMatch = null;
         String ifUnmodifiedSince = null;
-        api.applicationsApplicationIdDelete(applicationId, ifMatch, ifUnmodifiedSince);
+        api.applicationsApplicationIdDelete(response.getApplicationId(), ifMatch, ifUnmodifiedSince);
 
-        // TODO: test validations
+        // TODO ---> Assert
+        //Application checkExists = api.applicationsApplicationIdGet(response.getApplicationId(), ifNoneMatch, ifModifiedSince);
     }
 
     /**
@@ -53,11 +71,31 @@ public class ApplicationIndividualApiTest {
      */
     @Test
     public void applicationsApplicationIdGenerateKeysPostTest() throws ApiException {
-        String applicationId = null;
-        ApplicationKeyGenerateRequest body = null;
-        ApplicationKeys response = api.applicationsApplicationIdGenerateKeysPost(applicationId, body);
+        // Create application
+        Application applicationBody = new Application();
+        String applicationName = "SampleApplication";
+        applicationBody.setName(applicationName);
+        applicationBody.setThrottlingTier("50PerMin");
+        Application applicationPostResponse = api.applicationsPost(applicationBody);
 
-        // TODO: test validations
+        // make GenerateKeys request
+        List<String> supportedGrantTypes = new ArrayList<>();
+        supportedGrantTypes.add("password");
+        supportedGrantTypes.add("authorization_code");
+        ApplicationKeyGenerateRequest body = new ApplicationKeyGenerateRequest();
+        body.setCallbackUrl("http://wso2.com");
+        body.setKeyType(ApplicationKeyGenerateRequest.KeyTypeEnum.PRODUCTION);
+        body.setGrantTypesToBeSupported(supportedGrantTypes);
+        ApplicationKeys response = api.applicationsApplicationIdGenerateKeysPost
+                (applicationPostResponse.getApplicationId(), body);
+
+        Assert.assertFalse(response.getConsumerKey().isEmpty());
+        Assert.assertFalse(response.getConsumerSecret().isEmpty());
+
+        // Delete application
+        String ifMatch = null;
+        String ifUnmodifiedSince = null;
+        api.applicationsApplicationIdDelete(applicationPostResponse.getApplicationId(), ifMatch, ifUnmodifiedSince);
     }
 
     /**
@@ -67,13 +105,37 @@ public class ApplicationIndividualApiTest {
      */
     @Test
     public void applicationsApplicationIdGenerateTokenPostTest() throws ApiException {
-        String applicationId = null;
-        ApplicationTokenGenerateRequest body = null;
+        // Create application
+        Application applicationBody = new Application();
+        String applicationName = "SampleApplication";
+        applicationBody.setName(applicationName);
+        applicationBody.setThrottlingTier("50PerMin");
+        Application applicationPostResponse = api.applicationsPost(applicationBody);
+
+        // make GenerateKeys request
+        List<String> supportedGrantTypes = new ArrayList<>();
+        supportedGrantTypes.add("password");
+        ApplicationKeyGenerateRequest ApplicationKeyBody = new ApplicationKeyGenerateRequest();
+        ApplicationKeyBody.setCallbackUrl("http://wso2.com");
+        ApplicationKeyBody.setKeyType(ApplicationKeyGenerateRequest.KeyTypeEnum.PRODUCTION);
+        ApplicationKeyBody.setGrantTypesToBeSupported(supportedGrantTypes);
+        ApplicationKeys applicationKeysResponse = api.applicationsApplicationIdGenerateKeysPost
+                (applicationPostResponse.getApplicationId(), ApplicationKeyBody);
+
+        ApplicationTokenGenerateRequest body = new ApplicationTokenGenerateRequest();
+        body.setConsumerKey(applicationKeysResponse.getConsumerKey());
+        body.setConsumerSecret(applicationKeysResponse.getConsumerSecret());
+        body.setScopes("apim:view_api");
+        body.setValidityPeriod(10000);
         String ifMatch = null;
         String ifUnmodifiedSince = null;
-        ApplicationToken response = api.applicationsApplicationIdGenerateTokenPost(applicationId, body, ifMatch, ifUnmodifiedSince);
+        ApplicationToken response = api.applicationsApplicationIdGenerateTokenPost
+                (applicationPostResponse.getApplicationId(), body, ifMatch, ifUnmodifiedSince);
 
-        // TODO: test validations
+        Assert.assertEquals(response.getValidityTime().toString(), 10000);
+
+        // Delete application
+        api.applicationsApplicationIdDelete(applicationPostResponse.getApplicationId(), ifMatch, ifUnmodifiedSince);
     }
 
     /**
@@ -170,10 +232,17 @@ public class ApplicationIndividualApiTest {
      */
     @Test
     public void applicationsPostTest() throws ApiException {
-        Application body = null;
+        Application body = new Application();
+        String applicationName = "SampleApplication";
+        body.setName(applicationName);
+        body.setThrottlingTier("50PerMin");
         Application response = api.applicationsPost(body);
 
-        // TODO: test validations
+        Assert.assertEquals(response.getName(), applicationName);
+
+        String ifMatch = null;
+        String ifUnmodifiedSince = null;
+        api.applicationsApplicationIdDelete(response.getApplicationId(), ifMatch, ifUnmodifiedSince);
     }
 
 }

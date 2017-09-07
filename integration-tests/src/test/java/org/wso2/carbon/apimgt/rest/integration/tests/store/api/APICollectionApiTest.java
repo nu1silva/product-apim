@@ -19,15 +19,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APIIndividualApi;
 import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.API;
-import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APIBusinessInformation;
-import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APICorsConfiguration;
-import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APIEndpointSecurity;
-import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APIMaxTps;
-import org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.Sequence;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.ApiException;
+import org.wso2.carbon.apimgt.rest.integration.tests.store.common.SampleTestObjectCreator;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.APIList;
-
-import java.util.ArrayList;
 
 /**
  * API tests for APICollectionApi
@@ -39,75 +33,25 @@ public class APICollectionApiTest {
             new org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APICollectionApi();
     private final org.wso2.carbon.apimgt.rest.integration.tests.publisher.api.APIIndividualApi apiRemove =
             new APIIndividualApi();
+    SampleTestObjectCreator sampleTestObjectCreator = new SampleTestObjectCreator();
 
-    private String APIID = null;
+    private API response1 = null;
+    private API response2 = null;
+    private API response3 = null;
 
     @BeforeClass
     public void beforeClass() throws org.wso2.carbon.apimgt.rest.integration.tests.publisher.ApiException {
-
-        // Create an API for testing
-        API body = new API();
-        String contentType = "application/json";
-        if (body != null) {
-            body.setApiDefinition("{ \t\"paths\": { \t\t\"/order\": { \t\t\t\"post\": { \t\t\t\t\"x-auth-type\": " +
-                    "\"Application & Application User\", \t\t\t\t\"x-throttling-tier\": \"Unlimited\", \t\t\t\t\"description\":" +
-                    " \"Create a new Order\", \t\t\t\t\"parameters\": [{ \t\t\t\t\t\"schema\": { \t\t\t\t\t\t\"$ref\"" +
-                    ": \"#/definitions/Order\" \t\t\t\t\t}, \t\t\t\t\t\"description\": \"Order object that needs to be added\"," +
-                    " \t\t\t\t\t\"name\": \"body\", \t\t\t\t\t\"required\": true, \t\t\t\t\t\"in\": \"body\" \t\t\t\t}]," +
-                    " \t\t\t\t\"responses\": { \t\t\t\t\t\"201\": { \t\t\t\t\t\t\"headers\": { \t\t\t\t\t\t\t\"Location\"" +
-                    ": { \t\t\t\t\t\t\t\t\"description\": \"The URL of the newly created resource.\", \t\t\t\t\t\t\t\t\"type" +
-                    "\": \"string\" \t\t\t\t\t\t\t} \t\t\t\t\t\t}, \t\t\t\t\t\t\"schema\": { \t\t\t\t\t\t\t\"$ref\":" +
-                    " \"#/definitions/Order\" \t\t\t\t\t\t}, \t\t\t\t\t\t\"description\": \"Created.\" \t\t\t\t\t} " +
-                    "\t\t\t\t} \t\t\t} \t\t}, \t\t\"/menu\": { \t\t\t\"get\": { \t\t\t\t\"x-auth-type\": " +
-                    "\"Application & Application User\", \t\t\t\t\"x-throttling-tier\": \"Unlimited\", " +
-                    "\t\t\t\t\"description\": \"Return a list of available menu items\", \t\t\t\t\"parameters\":" +
-                    " [], \t\t\t\t\"responses\": { \t\t\t\t\t\"200\": { \t\t\t\t\t\t\"headers\": {}, \t\t\t\t\t\t\"schema\":" +
-                    " { \t\t\t\t\t\t\t\"title\": \"Menu\", \t\t\t\t\t\t\t\"properties\": { \t\t\t\t\t\t\t\t\"list\": " +
-                    "{ \t\t\t\t\t\t\t\t\t\"items\": { \t\t\t\t\t\t\t\t\t\t\"$ref\": \"#/definitions/MenuItem\" " +
-                    "\t\t\t\t\t\t\t\t\t}, \t\t\t\t\t\t\t\t\t\"type\": \"array\" \t\t\t\t\t\t\t\t} \t\t\t\t\t\t\t}, " +
-                    "\t\t\t\t\t\t\t\"type\": \"object\" \t\t\t\t\t\t}, \t\t\t\t\t\t\"description\": \"OK.\" \t\t\t\t\t} " +
-                    "\t\t\t\t} \t\t\t} \t\t} \t}, \t\"schemes\": [\"https\"], \t\"produces\": [\"application/json\"]," +
-                    " \t\"swagger\": \"2.0\", \t\"definitions\": { \t\t\"MenuItem\": { \t\t\t\"title\": \"Pizza menu Item\", " +
-                    "\t\t\t\"properties\": { \t\t\t\t\"price\": { \t\t\t\t\t\"type\": \"string\" \t\t\t\t}, \t\t\t\t\"description\":" +
-                    " { \t\t\t\t\t\"type\": \"string\" \t\t\t\t}, \t\t\t\t\"name\": { \t\t\t\t\t\"type\": \"string\" \t\t\t\t}," +
-                    " \t\t\t\t\"image\": { \t\t\t\t\t\"type\": \"string\" \t\t\t\t} \t\t\t}, \t\t\t\"required\": [\"name\"] \t\t}," +
-                    " \t\t\"Order\": { \t\t\t\"title\": \"Pizza Order\", \t\t\t\"properties\": { \t\t\t\t\"customerName\": " +
-                    "{ \t\t\t\t\t\"type\": \"string\" \t\t\t\t}, \t\t\t\t\"delivered\": { \t\t\t\t\t\"type\":" +
-                    " \"boolean\" \t\t\t\t}, \t\t\t\t\"address\": { \t\t\t\t\t\"type\": \"string\" \t\t\t\t}," +
-                    " \t\t\t\t\"pizzaType\": { \t\t\t\t\t\"type\": \"string\" \t\t\t\t}, \t\t\t\t\"creditCardNumber\":" +
-                    " { \t\t\t\t\t\"type\": \"string\" \t\t\t\t}, \t\t\t\t\"quantity\": { \t\t\t\t\t\"type\": \"number\" \t\t\t\t}, " +
-                    "\t\t\t\t\"orderId\": { \t\t\t\t\t\"type\": \"integer\" \t\t\t\t} \t\t\t}, \t\t\t\"required\": " +
-                    "[\"orderId\"] \t\t} \t}, \t\"consumes\": [\"application/json\"], \t\"info\": { \t\t\"title\": " +
-                    "\"PizzaShackAPI\", \t\t\"description\":" +
-                    " \"This document describe a RESTFul API for Pizza Shack online pizza delivery store.\\n\", \t\t\"license\": " +
-                    "{ \t\t\t\"name\": \"Apache 2.0\", \t\t\t\"url\": \"http://www.apache.org/licenses/LICENSE-2.0.html\" \t\t}, " +
-                    "\t\t\"contact\": { \t\t\t\"email\": \"architecture@pizzashack.com\", \t\t\t\"name\": \"John Doe\", " +
-                    "\t\t\t\"url\": \"http://www.pizzashack.com\" \t\t}, \t\t\"version\": \"1.0.0\" \t} }");
-        }
-        body.setName("IndivAPI");
-        body.setContext("iapi");
-        body.setVersion("1.0.0");
-        body.setProvider("admin");
-        body.setLifeCycleStatus("PUBLISHED");
-        body.setTransport(new ArrayList<String>() {{
-            add("http");
-        }});
-        body.setCacheTimeout(100);
-        body.setPolicies(new ArrayList<String>() {{
-            add("Unlimited");
-        }});
-        body.setVisibility(API.VisibilityEnum.PUBLIC);
-        body.setTags(new ArrayList<String>());
-        body.setMaxTps(new APIMaxTps());
-        body.setVisibleRoles(new ArrayList<String>());
-        body.setVisibleTenants(new ArrayList<String>());
-        body.setEndpointSecurity(new APIEndpointSecurity());
-        body.setSequences(new ArrayList<Sequence>());
-        body.setBusinessInformation(new APIBusinessInformation());
-        body.setCorsConfiguration(new APICorsConfiguration());
-        API response = apiSetup.apisPost(body, contentType);
-        APIID = response.getId();
+        API api001 = sampleTestObjectCreator.createSampleAPI("api001", "api001", "1.0.0",
+                "admin", "PUBLISHED");
+        API api002 = sampleTestObjectCreator.createSampleAPI("api002", "api002", "1.0.0",
+                "admin", "PUBLISHED");
+        API api003 = sampleTestObjectCreator.createSampleAPI("api003", "api003", "1.0.0",
+                "admin", "PUBLISHED");
+        response1 = apiSetup.apisPost(api001, "application/json");
+        response2 = apiSetup.apisPost(api002, "application/json");
+        response3 = apiSetup.apisPost(api003, "application/json");
     }
+
 
     /**
      * Retrieving APIs
@@ -120,17 +64,28 @@ public class APICollectionApiTest {
     public void apisGetTest() throws ApiException {
         Integer limit = 10;
         Integer offset = 0;
-        String query = "*";
+        String query = null;
         String ifNoneMatch = null;
         APIList response = api.apisGet(limit, offset, query, ifNoneMatch);
+        Assert.assertEquals(response.getCount().intValue(), 3);
+    }
 
-        Assert.assertEquals(response.getCount().intValue(), 1);
+    @Test
+    public void apisGetfromSearchQueryTest() throws ApiException {
+        Integer limit = 10;
+        Integer offset = 0;
+        String query = "provider:admin123";
+        String ifNoneMatch = null;
+        APIList response = api.apisGet(limit, offset, query, ifNoneMatch);
+        Assert.assertEquals(response.getCount().intValue(), 0);
     }
 
     @AfterClass
     public void afterClass() throws org.wso2.carbon.apimgt.rest.integration.tests.publisher.ApiException {
         org.wso2.carbon.apimgt.rest.integration.tests.publisher.model.APIList response =
-                apiSetup.apisGet(1, 1, null, null, null);
+                apiSetup.apisGet(10, 0, null, null, null);
         apiRemove.apisApiIdDelete(response.getList().get(0).getId(), null, null);
+        apiRemove.apisApiIdDelete(response.getList().get(1).getId(), null, null);
+        apiRemove.apisApiIdDelete(response.getList().get(2).getId(), null, null);
     }
 }

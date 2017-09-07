@@ -13,9 +13,12 @@
 
 package org.wso2.carbon.apimgt.rest.integration.tests.store.api;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.ApiException;
 import org.wso2.carbon.apimgt.rest.integration.tests.store.model.User;
+
+import java.util.UUID;
 
 /**
  * API tests for SignupApi
@@ -32,10 +35,22 @@ public class SignupApiTest {
      */
     @Test
     public void selfSignupPostTest() throws ApiException {
-        User body = null;
+        String username = "ThisIs12333";
+        String password = UUID.randomUUID().toString();
+        String firstName = "fname";
+        String lastname = "lname";
+        String email = "test@example.com";
+        User body = new User();
+        body.setUsername(username);
+        body.setEmail(email);
+        body.setFirstName(firstName);
+        body.setLastName(lastname);
+        body.setPassword(password);
         User response = api.selfSignupPost(body);
 
-        // TODO: test validations
+        Assert.assertEquals(response.getUsername(), username);
+        Assert.assertEquals(response.getPassword(), password);
+        Assert.assertEquals(response.getEmail(), email);
     }
 
 }

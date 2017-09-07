@@ -322,17 +322,17 @@ public class APIIndividualApiIT {
         // Published --> Blocked
         api.apisChangeLifecyclePost("Blocked", apiId, null, null, null);
         response = api.apisApiIdGet(apiId, null, null, null);
-        Assert.assertEquals("Blocked", response.getLifeCycleStatus(), "API status mismatch in Published state");
+        Assert.assertEquals("Blocked", response.getLifeCycleStatus(), "API status mismatch in Blocked state");
 
         // Blocked --> Deprecated
         api.apisChangeLifecyclePost("Deprecated", apiId, null, null, null);
         response = api.apisApiIdGet(apiId, null, null, null);
-        Assert.assertEquals("Deprecated", response.getLifeCycleStatus(), "API status mismatch in Published state");
+        Assert.assertEquals("Deprecated", response.getLifeCycleStatus(), "API status mismatch in Deprecated state");
 
         // Deprecated --> Retired
         api.apisChangeLifecyclePost("Retired", apiId, null, null, null);
         response = api.apisApiIdGet(apiId, null, null, null);
-        Assert.assertEquals("Retired", response.getLifeCycleStatus(), "API status mismatch in Published state");
+        Assert.assertEquals("Retired", response.getLifeCycleStatus(), "API status mismatch in Retired state");
     }
 
     /**
